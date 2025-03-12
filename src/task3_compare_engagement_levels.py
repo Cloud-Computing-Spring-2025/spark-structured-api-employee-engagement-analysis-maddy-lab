@@ -29,42 +29,19 @@ def load_data(spark, file_path):
     return df
 
 def map_engagement_level(df):
-    """
-    Map EngagementLevel from categorical to numerical values.
-
-    Parameters:
-        df (DataFrame): Spark DataFrame containing employee data.
-
-    Returns:
-        DataFrame: DataFrame with an additional column for numerical EngagementScore.
-    """
-    # TODO: Implement mapping of EngagementLevel to numerical values
-    # Example:
-    # 'Low' -> 1
-    # 'Medium' -> 2
-    # 'High' -> 3
-
-    pass  # Remove this line after implementing the function
+    # Map EngagementLevel to numerical values
+    df = df.withColumn("EngagementScore", when(col("EngagementLevel") == "Low", 1)
+                                        .when(col("EngagementLevel") == "Medium", 2)
+                                        .when(col("EngagementLevel") == "High", 3)
+                                        .otherwise(0))
+    return df
 
 def compare_engagement_levels(df):
-    """
-    Compare engagement levels across different job titles and identify the top-performing job title.
-
-    Parameters:
-        df (DataFrame): Spark DataFrame containing employee data with numerical EngagementScore.
-
-    Returns:
-        DataFrame: DataFrame containing JobTitle and their average EngagementLevel.
-    """
-    # TODO: Implement Task 3
-    # Steps:
-    # 1. Map EngagementLevel to numerical values.
-    # 2. Group by JobTitle and calculate average EngagementScore.
-    # 3. Round the average to two decimal places.
-    # 4. Return the result DataFrame.
-
-    pass  # Remove this line after implementing the function
-
+    # Calculate average engagement level per job title
+    result_df = df.groupBy("JobTitle") \
+                  .agg(spark_round(avg("EngagementScore"), 2).alias("AvgEngagementLevel")) \
+                  .orderBy(col("AvgEngagementLevel").desc())
+    return result_df
 def write_output(result_df, output_path):
     """
     Write the result DataFrame to a CSV file.
@@ -86,8 +63,8 @@ def main():
     spark = initialize_spark()
     
     # Define file paths
-    input_file = "/workspaces/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
-    output_file = "/workspaces/Employee_Engagement_Analysis_Spark/outputs/task3/engagement_levels_job_titles.csv"
+    input_file = "input/employee_data.csv"
+    output_file = "outputs/task3/compare_engagement.txt"
     
     # Load data
     df = load_data(spark, input_file)
